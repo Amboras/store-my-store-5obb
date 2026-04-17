@@ -30,10 +30,10 @@ const body = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Store — Modern Commerce',
-    template: '%s | Store',
+    default: 'VOLTA — Portable Chargers & Travel Accessories',
+    template: '%s | VOLTA',
   },
-  description: 'Discover curated products crafted with care. A modern ecommerce experience.',
+  description: 'Premium portable chargers and travel accessories built for modern explorers. Stay charged wherever life takes you.',
 }
 
 export default function RootLayout({

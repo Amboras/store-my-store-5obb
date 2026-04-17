@@ -7,7 +7,8 @@ import { usePolicies } from '@/hooks/use-policies'
 const footerLinks = {
   shop: [
     { label: 'All Products', href: '/products' },
-    { label: 'New Arrivals', href: '/products?sort=newest' },
+    { label: 'Portable Chargers', href: '/products' },
+    { label: 'Travel Accessories', href: '/products' },
     { label: 'Collections', href: '/collections' },
   ],
   help: [
@@ -47,12 +48,12 @@ export default function Footer() {
           {/* Brand */}
           <div className="lg:col-span-1">
             <Link href="/" className="inline-block">
-              <span className="font-heading text-2xl font-semibold">
-                Store
+              <span className="font-heading text-xl font-bold tracking-tight">
+                VOLTA<span className="text-blue-500">.</span>
               </span>
             </Link>
             <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-xs">
-              Curated products crafted with care. Quality you can feel, design you can see.
+              Premium portable power and travel accessories built for modern explorers. Stay charged wherever life takes you.
             </p>
           </div>
 
@@ -102,7 +103,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Store. All rights reserved.
+            &copy; {new Date().getFullYear()} VOLTA. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
             <button

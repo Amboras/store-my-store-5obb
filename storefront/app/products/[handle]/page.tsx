@@ -5,12 +5,22 @@ export const revalidate = 3600 // ISR: revalidate every hour
 import { medusaServerClient } from '@/lib/medusa-client'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Truck, RotateCcw, Shield, ChevronRight } from 'lucide-react'
+import { ChevronRight, CheckCircle2 } from 'lucide-react'
 import ProductActions from '@/components/product/product-actions'
 import ProductAccordion from '@/components/product/product-accordion'
 import { ProductViewTracker } from '@/components/product/product-view-tracker'
+import TrustBadges from '@/components/product/trust-badges'
+import UrgencyBar from '@/components/product/urgency-bar'
+import BundleOfferWrapper from '@/components/product/bundle-offer-wrapper'
 import { getProductPlaceholder } from '@/lib/utils/placeholder-images'
 import { type VariantExtension } from '@/components/product/product-price'
+
+// IDs for the GaN Charger (bundle upsell target)
+const GAN_CHARGER_PRODUCT_ID = 'prod_01KPE6Q228GA4G6V1WGAPG7Y4C'
+const BUNDLE_PRODUCT_ID = 'prod_01KPE6PJV99S7SW2TCPB5D0BP0'
+
+// Products that get the bundle offer (PowerSlim 20K Pro)
+const POWER_BANK_HANDLE = 'powerslim-20k-pro'
 
 async function getProduct(handle: string) {
   try {
@@ -26,6 +36,23 @@ async function getProduct(handle: string) {
     return response.products?.[0] || null
   } catch (error) {
     console.error('Error fetching product:', error)
+    return null
+  }
+}
+
+async function getGanChargerFirstVariantId(): Promise<string | null> {
+  try {
+    const regionsResponse = await medusaServerClient.store.region.list()
+    const regionId = regionsResponse.regions[0]?.id
+    if (!regionId) return null
+    const response = await medusaServerClient.store.product.list({
+      id: [GAN_CHARGER_PRODUCT_ID],
+      region_id: regionId,
+      fields: '*variants.calculated_price',
+    })
+    const p = response.products?.[0]
+    return p?.variants?.[0]?.id || null
+  } catch {
     return null
   }
 }
@@ -83,6 +110,13 @@ export async function generateMetadata({
   }
 }
 
+const highlights = [
+  '45W PD — charges your laptop in under 2 hours',
+  'Slim profile — fits in any pocket or bag',
+  'CE, FCC, and UN38.3 certified — airline approved',
+  '18-month average customer battery satisfaction',
+]
+
 export default async function ProductPage({
   params,
 }: {
@@ -96,16 +130,22 @@ export default async function ProductPage({
   }
 
   const variantExtensions = await getVariantExtensions(product.id)
+  const isPowerBank = handle === POWER_BANK_HANDLE
+  const ganChargerVariantId = isPowerBank ? await getGanChargerFirstVariantId() : null
 
   const allImages = [
     ...(product.thumbnail ? [{ url: product.thumbnail }] : []),
-    ...(product.images || []).filter((img: any) => img.url !== product.thumbnail),
+    ...(product.images || []).filter((img: { url: string }) => img.url !== product.thumbnail),
   ]
 
-  // Use placeholder if no images
   const displayImages = allImages.length > 0
     ? allImages
     : [{ url: getProductPlaceholder(product.id) }]
+
+  // Get stock from first variant's extension
+  const firstVariantId = product.variants?.[0]?.id
+  const firstExt = firstVariantId ? variantExtensions[firstVariantId] : null
+  const stockCount = firstExt?.inventory_quantity ?? 7
 
   return (
     <>
@@ -124,9 +164,9 @@ export default async function ProductPage({
 
       <div className="container-custom py-8 lg:py-12">
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
-          {/* Product Images */}
+          {/* ── Product Images ── */}
           <div className="space-y-3">
-            <div className="relative aspect-[3/4] overflow-hidden bg-muted rounded-sm">
+            <div className="relative aspect-[4/5] overflow-hidden bg-muted rounded-sm">
               <Image
                 src={displayImages[0].url}
                 alt={product.title}
@@ -139,10 +179,10 @@ export default async function ProductPage({
 
             {displayImages.length > 1 && (
               <div className="grid grid-cols-4 gap-3">
-                {displayImages.slice(1, 5).map((image: any, idx: number) => (
+                {displayImages.slice(1, 5).map((image: { url: string }, idx: number) => (
                   <div
                     key={idx}
-                    className="relative aspect-[3/4] overflow-hidden bg-muted rounded-sm"
+                    className="relative aspect-[4/5] overflow-hidden bg-muted rounded-sm"
                   >
                     <Image
                       src={image.url}
@@ -157,16 +197,16 @@ export default async function ProductPage({
             )}
           </div>
 
-          {/* Product Info */}
-          <div className="lg:sticky lg:top-24 lg:self-start space-y-6">
-            {/* Title & Subtitle */}
+          {/* ── Product Info ── */}
+          <div className="lg:sticky lg:top-24 lg:self-start space-y-5">
+            {/* Title */}
             <div>
               {product.subtitle && (
-                <p className="text-sm uppercase tracking-[0.15em] text-muted-foreground mb-2">
+                <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground mb-2">
                   {product.subtitle}
                 </p>
               )}
-              <h1 className="text-h2 font-heading font-semibold">{product.title}</h1>
+              <h1 className="text-h2 font-heading font-bold">{product.title}</h1>
             </div>
 
             <ProductViewTracker
@@ -177,24 +217,37 @@ export default async function ProductPage({
               value={product.variants?.[0]?.calculated_price?.calculated_amount ?? null}
             />
 
-            {/* Variant Selector + Price + Add to Cart (client component) */}
+            {/* Quick Highlights */}
+            {isPowerBank && (
+              <ul className="space-y-1.5">
+                {highlights.map((h) => (
+                  <li key={h} className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <CheckCircle2 className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                    {h}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* Urgency Bar */}
+            <UrgencyBar stockCount={stockCount} saleEndsHours={12} />
+
+            {/* Variant Selector + Price + Add to Cart */}
             <ProductActions product={product} variantExtensions={variantExtensions} />
 
-            {/* Trust Signals */}
-            <div className="grid grid-cols-3 gap-4 py-6 border-t">
-              <div className="text-center">
-                <Truck className="h-5 w-5 mx-auto mb-1.5" strokeWidth={1.5} />
-                <p className="text-xs text-muted-foreground">Free Shipping</p>
-              </div>
-              <div className="text-center">
-                <RotateCcw className="h-5 w-5 mx-auto mb-1.5" strokeWidth={1.5} />
-                <p className="text-xs text-muted-foreground">30-Day Returns</p>
-              </div>
-              <div className="text-center">
-                <Shield className="h-5 w-5 mx-auto mb-1.5" strokeWidth={1.5} />
-                <p className="text-xs text-muted-foreground">Secure Checkout</p>
-              </div>
-            </div>
+            {/* Bundle Offer — only on power bank */}
+            {isPowerBank && ganChargerVariantId && (
+              <BundleOfferWrapper
+                primaryProductHandle={handle}
+                bundleVariantId={ganChargerVariantId}
+                bundleTitle="65W GaN Wall Charger"
+                bundlePrice={3995}
+                bundleSavings={1000}
+              />
+            )}
+
+            {/* Trust Badges */}
+            <TrustBadges />
 
             {/* Accordion Sections */}
             <ProductAccordion
