@@ -11,7 +11,7 @@ interface ProductVariant {
   id: string;
   product_id?: string;
   inventory_quantity?: number;
-  manage_inventory?: boolean;
+  allow_backorder?: boolean;
   calculated_price?: {
     calculated_amount?: number;
     currency_code?: string;
@@ -28,8 +28,9 @@ export default function AddToCart({ variant }: AddToCartProps) {
   const [justAdded, setJustAdded] = useState(false)
 
   const inventoryQuantity = variant?.inventory_quantity
-  const isOutOfStock = variant?.manage_inventory && inventoryQuantity != null && inventoryQuantity <= 0
-  const isLowStock = variant?.manage_inventory && inventoryQuantity != null && inventoryQuantity > 0 && inventoryQuantity < 10
+  const allowBackorder = variant?.allow_backorder ?? false
+  const isOutOfStock = !allowBackorder && inventoryQuantity != null && inventoryQuantity <= 0
+  const isLowStock = inventoryQuantity != null && inventoryQuantity > 0 && inventoryQuantity < 10
 
   const handleAddToCart = () => {
     if (!variant?.id || isOutOfStock) return
@@ -85,7 +86,7 @@ export default function AddToCart({ variant }: AddToCartProps) {
           <button
             onClick={() => setQuantity(quantity + 1)}
             className="p-3 hover:bg-muted transition-colors"
-            disabled={isOutOfStock || (inventoryQuantity != null && quantity >= inventoryQuantity)}
+            disabled={isOutOfStock || (!allowBackorder && inventoryQuantity != null && quantity >= inventoryQuantity)}
             aria-label="Increase quantity"
           >
             <Plus className="h-4 w-4" />

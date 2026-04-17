@@ -2,7 +2,7 @@ import { formatPrice } from '@/lib/utils/format-price'
 
 export interface VariantExtension {
   compare_at_price: number | null
-  manage_inventory: boolean
+  allow_backorder: boolean
   inventory_quantity: number | null
 }
 
@@ -80,6 +80,7 @@ export function isProductSoldOut(
   return variants.every((v: any) => {
     const ext = variantExtensions[v.id]
     if (!ext) return false
-    return ext.manage_inventory && ext.inventory_quantity != null && ext.inventory_quantity <= 0
+    if (ext.allow_backorder) return false
+    return ext.inventory_quantity != null && ext.inventory_quantity <= 0
   })
 }

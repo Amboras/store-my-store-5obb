@@ -9,6 +9,8 @@ out/
 .env
 .env.local
 .env*.local
+storefront/.env.local
+storefront/.env.local
 
 # Logs
 *.log

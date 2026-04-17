@@ -61,11 +61,11 @@ export default function ProductGrid({
         )
         if (!res.ok) return {}
         const data = await res.json()
-        const results: Record<string, { compare_at_price: number | null; manage_inventory: boolean; inventory_quantity: number | null }> = {}
+        const results: Record<string, { compare_at_price: number | null; allow_backorder: boolean; inventory_quantity: number | null }> = {}
         for (const v of data.variants || []) {
           results[v.id] = {
             compare_at_price: v.compare_at_price,
-            manage_inventory: v.manage_inventory ?? false,
+            allow_backorder: v.allow_backorder ?? false,
             inventory_quantity: v.inventory_quantity,
           }
         }

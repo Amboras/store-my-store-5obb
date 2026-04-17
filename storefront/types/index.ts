@@ -20,7 +20,7 @@ export type ProductVariant = {
   title: string
   sku?: string | null
   inventory_quantity?: number
-  manage_inventory: boolean
+  allow_backorder: boolean
   prices?: ProductVariantPrice[]
   options?: Record<string, string>
   product_id: string

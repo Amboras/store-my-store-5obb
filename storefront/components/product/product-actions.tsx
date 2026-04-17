@@ -98,10 +98,10 @@ export default function ProductActions({ product, variantExtensions }: ProductAc
   const cp = selectedVariant?.calculated_price
   const currency = (cp && typeof cp !== 'number' ? cp.currency_code : undefined) || 'usd'
 
-  const manageInventory = ext?.manage_inventory ?? false
+  const allowBackorder = ext?.allow_backorder ?? false
   const inventoryQuantity = ext?.inventory_quantity
-  const isOutOfStock = manageInventory && inventoryQuantity != null && inventoryQuantity <= 0
-  const isLowStock = manageInventory && inventoryQuantity != null && inventoryQuantity > 0 && inventoryQuantity < 10
+  const isOutOfStock = !allowBackorder && inventoryQuantity != null && inventoryQuantity <= 0
+  const isLowStock = inventoryQuantity != null && inventoryQuantity > 0 && inventoryQuantity < 10
 
   const handleOptionChange = (optionId: string, value: string) => {
     setSelectedOptions((prev) => ({ ...prev, [optionId]: value }))
@@ -180,14 +180,16 @@ export default function ProductActions({ product, variantExtensions }: ProductAc
               {values.map((value) => {
                 const isSelected = selectedValue === value
 
-                // Check availability: is there a variant with this option value that's in stock?
+                // Check availability: is there a variant with this option value that's in stock
+                // (or that allows backorders)?
                 const isAvailable = variants.some((v: ProductVariantWithPrice) => {
                   const hasValue = v.options?.some(
                     (o: VariantOption) => (o.option_id === optionId || o.option?.id === optionId) && o.value === value
                   )
                   if (!hasValue) return false
                   const vExt = variantExtensions?.[v.id]
-                  if (!vExt?.manage_inventory) return true
+                  if (!vExt) return true
+                  if (vExt.allow_backorder) return true
                   return vExt.inventory_quantity == null || vExt.inventory_quantity > 0
                 })
 
@@ -235,7 +237,7 @@ export default function ProductActions({ product, variantExtensions }: ProductAc
           <button
             onClick={() => setQuantity(quantity + 1)}
             className="p-3 hover:bg-muted transition-colors"
-            disabled={isOutOfStock || (inventoryQuantity != null && quantity >= inventoryQuantity)}
+            disabled={isOutOfStock || (!allowBackorder && inventoryQuantity != null && quantity >= inventoryQuantity)}
             aria-label="Increase quantity"
           >
             <Plus className="h-4 w-4" />

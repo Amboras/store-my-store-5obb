@@ -50,7 +50,7 @@ async function getVariantExtensions(productId: string): Promise<Record<string, V
     for (const v of data.variants || []) {
       map[v.id] = {
         compare_at_price: v.compare_at_price,
-        manage_inventory: v.manage_inventory ?? false,
+        allow_backorder: v.allow_backorder ?? false,
         inventory_quantity: v.inventory_quantity,
       }
     }
